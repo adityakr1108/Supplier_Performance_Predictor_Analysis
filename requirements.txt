@@ -11,6 +11,7 @@ streamlit
 plotly
 requests
 sqlalchemy
+psycopg2-binary
 jinja2
 python-multipart
 starlette
