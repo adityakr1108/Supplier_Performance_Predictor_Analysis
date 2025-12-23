@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: supplier-predictor-backend
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend_requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: AZURE_AI_ENDPOINT
+        sync: false
+      - key: AZURE_AI_KEY
+        sync: false
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_DEPLOYMENT_NAME
+        value: gpt-4
+      - key: AZURE_OPENAI_API_VERSION
+        value: 2024-08-01-preview
+      - key: LANGSMITH_API_KEY
+        sync: false
+      - key: LANGSMITH_PROJECT
+        value: supplier-performance-predictor
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHONUNBUFFERED
+        value: 1
+    healthCheckPath: /health
