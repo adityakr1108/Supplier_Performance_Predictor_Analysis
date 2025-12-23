@@ -8,6 +8,7 @@ langchain-openai
 python-dotenv
 pandas
 streamlit
+plotly
 requests
 sqlalchemy
 jinja2
