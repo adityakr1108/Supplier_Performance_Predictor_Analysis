@@ -1,0 +1,921 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Header Section -->
+    <div class="dashboard-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="h2 mb-2 text-gradient">
+                    <i class="fas fa-tachometer-alt me-3"></i>
+                    Supplier Performance Analytics Dashboard
+                </h1>
+                <p class="text-muted mb-0">Real-time insights and predictive analytics for supplier management</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="dashboard-actions">
+                    <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-1"></i> Refresh
+                    </button>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="fas fa-download me-1"></i> Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row g-2 align-items-stretch mb-4">
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card stats-card-primary">
+                <div class="stats-card-body">
+                    <div class="stats-card-content">
+                        <div class="stats-card-header">
+                            <span class="stats-card-title">Total Suppliers</span>
+                            <div class="stats-card-icon">
+                                <i class="fas fa-industry"></i>
+                            </div>
+                        </div>
+                        <div class="stats-card-value" id="total-suppliers">{{ stats.total_suppliers or 0 }}</div>
+                        <div class="stats-card-footer">
+                            <span class="stats-card-indicator positive" id="supplier-trend">
+                                <i class="fas fa-arrow-up"></i> {% if stats.predictions_made > 0 %}Active monitoring{% else %}Ready for analysis{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card stats-card-success">
+                <div class="stats-card-body">
+                    <div class="stats-card-content">
+                        <div class="stats-card-header">
+                            <span class="stats-card-title">High Performers</span>
+                            <div class="stats-card-icon">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                        </div>
+                        <div class="stats-card-value" id="high-reliability">{{ stats.high_reliability or 0 }}</div>
+                        <div class="stats-card-footer">
+                            <span class="stats-card-indicator positive">
+                                <i class="fas fa-trophy"></i> Top-tier suppliers
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card stats-card-warning">
+                <div class="stats-card-body">
+                    <div class="stats-card-content">
+                        <div class="stats-card-header">
+                            <span class="stats-card-title">Risk Alerts</span>
+                            <div class="stats-card-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                        <div class="stats-card-value" id="flagged-orders">{{ stats.flagged_orders or 0 }}</div>
+                        <div class="stats-card-footer">
+                            <span class="stats-card-indicator warning">
+                                <i class="fas fa-shield-alt"></i> Requires attention
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="stats-card stats-card-info">
+                <div class="stats-card-body">
+                    <div class="stats-card-content">
+                        <div class="stats-card-header">
+                            <span class="stats-card-title">Avg Performance</span>
+                            <div class="stats-card-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="stats-card-value" id="avg-reliability">{{ "%.1f"|format(stats.avg_reliability or 0) }}%</div>
+                        <div class="stats-card-footer">
+                            <span class="stats-card-indicator" id="performance-trend">
+                                <i class="fas fa-analytics"></i> AI-powered insights
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Analytics Section -->
+    <div class="row mb-4">
+        <!-- Reliability Distribution - Has real data (56 low, 9 medium, 2 high) -->
+        <div class="col-lg-6 d-flex">
+            <div class="chart-card h-100 w-100">
+                <div class="chart-card-header bg-primary">
+                    <h5 class="mb-0">
+                        <i class="fas fa-pie-chart me-2"></i>
+                        Reliability Distribution
+                    </h5>
+                </div>
+                <div class="chart-card-body d-flex flex-column align-items-center">
+                    <div class="risk-distribution-container w-100" style="position: relative;">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                    <div class="mt-3 w-100">
+                        <div class="risk-legend">
+                            <div class="legend-item">
+                                <span class="legend-color bg-success"></span>
+                                <span class="legend-label">High Reliability</span>
+                                <span class="legend-value" id="high-reliability-count">{{ stats.high_reliability or 0 }}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color bg-warning"></span>
+                                <span class="legend-label">Medium Reliability</span>
+                                <span class="legend-value" id="medium-reliability-count">{{ stats.medium_reliability or 0 }}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color bg-danger"></span>
+                                <span class="legend-label">Low Reliability</span>
+                                <span class="legend-value" id="low-reliability-count">{{ stats.low_reliability or 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Trend Analysis - Has real data (53 declining, 14 stable) -->
+        <div class="col-lg-6 d-flex">
+            <div class="chart-card h-100 w-100">
+                <div class="chart-card-header bg-warning">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Performance Trends
+                    </h5>
+                </div>
+                <div class="chart-card-body d-flex flex-column align-items-center">
+                    <div class="chart-container w-100" style="position: relative;">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                    <div class="mt-3 w-100">
+                        <div class="risk-legend">
+                            <div class="legend-item">
+                                <span class="legend-color bg-danger"></span>
+                                <span class="legend-label">Declining</span>
+                                <span class="legend-value" id="declining-count">{{ stats.declining_trend or 0 }}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color bg-primary"></span>
+                                <span class="legend-label">Stable</span>
+                                <span class="legend-value" id="stable-count">{{ stats.stable_trend or 0 }}</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color bg-success"></span>
+                                <span class="legend-label">Improving</span>
+                                <span class="legend-value" id="improving-count">{{ stats.improving_trend or 0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Overview -->
+    <div class="row g-2 align-items-stretch mb-4">
+        <!-- Overall Performance Gauge - Shows real avg (24.8%) -->
+        <div class="col-lg-6 d-flex">
+            <div class="chart-card h-100 w-100">
+                <div class="chart-card-header bg-info">
+                    <h5 class="mb-0">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Overall Performance Meter
+                    </h5>
+                </div>
+                <div class="chart-card-body d-flex align-items-center justify-content-center text-center">
+                    <div class="performance-meter w-100">
+                        <div class="meter-container" style="height: 280px; width: 100%; position: relative;">
+                            <canvas id="performanceMeter"></canvas>
+                            <div class="meter-value" id="meter-value" style="position: absolute; top: 60%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                <span class="meter-number" style="font-size: 2rem; font-weight: bold; color: #e74c3c;">{{ "%.1f"|format(stats.avg_reliability or 0) }}%</span>
+                                <br>
+                                <span class="meter-label" style="font-size: 0.9rem; color: #666;">Average Performance</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Assessment Summary -->
+        <div class="col-lg-6 d-flex">
+            <div class="chart-card h-100 w-100">
+                <div class="chart-card-header bg-danger">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Risk Assessment Summary
+                    </h5>
+                </div>
+                <div class="chart-card-body">
+                    <div class="risk-summary-grid">
+                        <div class="risk-item high-risk">
+                            <div class="risk-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="risk-content">
+                                <h3 class="risk-number">{{ stats.low_reliability or 0 }}</h3>
+                                <p class="risk-label">High Risk Suppliers</p>
+                                <small class="risk-percentage">{{ "%.1f"|format((stats.low_reliability / stats.total_suppliers * 100) if stats.total_suppliers > 0 else 0) }}% of total</small>
+                            </div>
+                        </div>
+                        <div class="risk-item medium-risk">
+                            <div class="risk-icon">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="risk-content">
+                                <h3 class="risk-number">{{ stats.medium_reliability or 0 }}</h3>
+                                <p class="risk-label">Medium Risk Suppliers</p>
+                                <small class="risk-percentage">{{ "%.1f"|format((stats.medium_reliability / stats.total_suppliers * 100) if stats.total_suppliers > 0 else 0) }}% of total</small>
+                            </div>
+                        </div>
+                        <div class="risk-item low-risk">
+                            <div class="risk-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="risk-content">
+                                <h3 class="risk-number">{{ stats.high_reliability or 0 }}</h3>
+                                <p class="risk-label">Low Risk Suppliers</p>
+                                <small class="risk-percentage">{{ "%.1f"|format((stats.high_reliability / stats.total_suppliers * 100) if stats.total_suppliers > 0 else 0) }}% of total</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Analysis Cards Row - Top/Risk Suppliers (has real data) -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-left-primary shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                        Top Performing Supplier
+                    </div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="top-supplier">{{ stats.top_supplier or "Loading..." }}</div>
+                    <div class="text-xs text-success" id="top-supplier-score">{{ "%.1f"|format(stats.top_supplier_score or 0) }}% Performance Score</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-left-danger shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                        Highest Risk Supplier
+                    </div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="risk-supplier">{{ stats.risk_supplier or "Loading..." }}</div>
+                    <div class="text-xs text-danger" id="risk-supplier-score">{{ "%.1f"|format(stats.risk_supplier_score or 0) }}% Performance Score</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+            <div class="card border-left-warning shadow">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                        Declining Trends Alert
+                    </div>
+                    <div class="h6 mb-0 font-weight-bold text-gray-800" id="declining-alert">{{ stats.declining_trend or 0 }} Suppliers</div>
+                    <div class="text-xs text-warning">{{ "%.1f"|format((stats.declining_trend / stats.total_suppliers * 100) if stats.total_suppliers > 0 else 0) }}% showing decline</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplier Table & Watchlist -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>Suppliers</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex mb-2 gap-2">
+                        <input id="supplierSearch" class="form-control" placeholder="Search suppliers..." />
+                        <button class="btn btn-outline-secondary" id="refreshSuppliers"><i class="fas fa-sync"></i></button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 360px;">
+                        <table class="table table-sm align-middle" id="suppliersTable">
+                            <thead>
+                                <tr>
+                                    <th>Supplier</th>
+                                    <th>Score</th>
+                                    <th>Trend</th>
+                                    <th>Reliability</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Watchlist</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="watchlist"></ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- What-if Simulator -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-sliders-h me-2"></i>What-if Simulator</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Improve On-time Percentage (+%)</label>
+                            <input type="range" class="form-range" id="simOnTime" min="0" max="30" step="1" value="0">
+                            <small class="text-muted" id="simOnTimeVal">0%</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Reduce Defect Rate (-%)</label>
+                            <input type="range" class="form-range" id="simDefect" min="0" max="20" step="1" value="0">
+                            <small class="text-muted" id="simDefectVal">0%</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Increase Contract Compliance (+%)</label>
+                            <input type="range" class="form-range" id="simCompliance" min="0" max="20" step="1" value="0">
+                            <small class="text-muted" id="simComplianceVal">0%</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-secondary mb-0" id="simResult">
+                                <strong>Predicted Avg Score:</strong> <span id="simScore">{{ "%.1f"|format(stats.avg_reliability or 0) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Status -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-database me-2"></i>AI Analysis Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="status-item">
+                                <h6 class="text-success">✓ Predictions Generated</h6>
+                                <p class="mb-1">{{ stats.total_suppliers or 0 }} suppliers analyzed</p>
+                                <small class="text-muted">Real AI-powered analysis complete</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="status-item">
+                                <h6 class="text-info">📊 Data Quality</h6>
+                                <p class="mb-1">{{ "%.1f"|format(stats.avg_reliability or 0) }}% average performance</p>
+                                <small class="text-muted">Based on actual AI predictions</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                Analysis Complete
+                            </div>
+                        </div>
+                        <small class="text-muted">All {{ stats.total_suppliers or 0 }} suppliers have been processed through AI analysis</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-bell me-2"></i>Risk Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if stats.low_reliability and stats.low_reliability > 0 %}
+                    <div class="alert alert-danger d-flex align-items-center" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <div>
+                            <strong>{{ stats.low_reliability }} suppliers</strong> classified as high risk
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.declining_trend and stats.declining_trend > 0 %}
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="fas fa-trend-down me-2"></i>
+                        <div>
+                            <strong>{{ stats.declining_trend }} suppliers</strong> showing declining trends
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if stats.high_reliability and stats.high_reliability > 0 %}
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <div>
+                            <strong>{{ stats.high_reliability }} suppliers</strong> performing excellently
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not stats.total_suppliers or stats.total_suppliers == 0 %}
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div>
+                            <strong>No data available</strong> - Run predictions to see alerts
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Store chart instances for only the charts we're using
+    let riskDistributionChart, trendsChart, performanceMeter;
+
+    // Reusable helpers
+    const niceNumber = (n) => {
+        const v = Number(n || 0);
+        return isNaN(v) ? '0' : v.toLocaleString();
+    };
+    
+    // Enhanced dashboard functionality
+    function refreshDashboard() {
+        showLoadingState();
+        loadRealDashboardData();
+    }
+    
+    function exportReport() {
+        try {
+            window.location.href = '/api/dashboard/export';
+        } catch (e) {
+            console.error('Export failed', e);
+            alert('Export failed. Please try again.');
+        }
+    }
+    
+    function showLoadingState() {
+        const elements = ['high-reliability-count', 'medium-reliability-count', 'low-reliability-count'];
+        elements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.innerHTML = '<div class="loading-skeleton" style="width:30px;height:15px;"></div>';
+            }
+        });
+    }
+    
+    // Load ONLY real data - no mock data generators
+    async function loadRealDashboardData() {
+        try {
+            console.log('Loading REAL dashboard data...');
+            const response = await fetch('/api/dashboard/stats', {
+                method: 'GET',
+                credentials: 'include',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            if (response.ok) {
+                const stats = await response.json();
+                console.log('Received REAL stats:', stats);
+                
+                // Update ONLY with real data - no fake generators
+                updateRealStats(stats);
+                updateRealCharts(stats);
+            } else {
+                console.error('Failed to load dashboard data:', response.status, response.statusText);
+                useFallbackData();
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            useFallbackData();
+        }
+    }
+    
+    // Use server-side rendered data as fallback
+    function useFallbackData() {
+        const fallbackStats = {
+            total_suppliers: parseInt('{{ stats.total_suppliers or 0 }}'),
+            high_reliability: parseInt('{{ stats.high_reliability or 0 }}'),
+            medium_reliability: parseInt('{{ stats.medium_reliability or 0 }}'),
+            low_reliability: parseInt('{{ stats.low_reliability or 0 }}'),
+            declining_trend: parseInt('{{ stats.declining_trend or 0 }}'),
+            stable_trend: parseInt('{{ stats.stable_trend or 0 }}'),
+            improving_trend: parseInt('{{ stats.improving_trend or 0 }}'),
+            avg_reliability: parseFloat('{{ stats.avg_reliability or 0 }}')
+        };
+        console.log('Using fallback data:', fallbackStats);
+        updateRealStats(fallbackStats);
+        updateRealCharts(fallbackStats);
+    }
+    
+    function updateRealStats(stats) {
+        console.log('Updating with REAL stats only:', stats);
+        
+        // Update legend values for risk distribution
+        const highElement = document.getElementById('high-reliability-count');
+        const mediumElement = document.getElementById('medium-reliability-count');
+        const lowElement = document.getElementById('low-reliability-count');
+        
+        if (highElement) highElement.textContent = parseInt(stats.high_reliability) || 0;
+        if (mediumElement) mediumElement.textContent = parseInt(stats.medium_reliability) || 0;
+        if (lowElement) lowElement.textContent = parseInt(stats.low_reliability) || 0;
+        
+        // Update trend counts
+        const decliningElement = document.getElementById('declining-count');
+        const stableElement = document.getElementById('stable-count');
+        const improvingElement = document.getElementById('improving-count');
+        
+        if (decliningElement) decliningElement.textContent = parseInt(stats.declining_trend) || 0;
+        if (stableElement) stableElement.textContent = parseInt(stats.stable_trend) || 0;
+        if (improvingElement) improvingElement.textContent = parseInt(stats.improving_trend) || 0;
+        
+        // Update performance meter value
+        const meterValueElement = document.getElementById('meter-value');
+        if (meterValueElement) {
+            const meterNumber = meterValueElement.querySelector('.meter-number');
+            if (meterNumber) {
+                const avgReliability = parseFloat(stats.avg_reliability) || 0;
+                meterNumber.textContent = avgReliability.toFixed(1) + '%';
+                
+                // Color coding based on actual performance
+                if (avgReliability >= 70) {
+                    meterNumber.style.color = '#28a745';
+                } else if (avgReliability >= 40) {
+                    meterNumber.style.color = '#ffc107';
+                } else {
+                    meterNumber.style.color = '#dc3545';
+                }
+            }
+        }
+        
+        console.log('REAL stats updated successfully - NO MOCK DATA');
+    }
+    
+    function updateRealCharts(stats) {
+        console.log('Updating charts with REAL data only:', stats);
+        updateRiskDistributionChart(stats);
+        updateTrendsChart(stats);
+        updatePerformanceMeter(stats);
+        console.log('REAL charts updated - NO MOCK DATA GENERATORS');
+    }
+    
+    function updateRiskDistributionChart(stats) {
+        if (riskDistributionChart && stats) {
+            const data = [
+                parseInt(stats.high_reliability) || 0,
+                parseInt(stats.medium_reliability) || 0,
+                parseInt(stats.low_reliability) || 0
+            ];
+            console.log('Updating risk distribution chart with data:', data);
+            riskDistributionChart.data.datasets[0].data = data;
+            riskDistributionChart.update('active');
+        }
+    }
+    
+    function updateTrendsChart(stats) {
+        if (trendsChart && stats) {
+            const data = [
+                Math.min(parseInt(stats.declining_trend) || 0, 999),
+                Math.min(parseInt(stats.stable_trend) || 0, 999),
+                Math.min(parseInt(stats.improving_trend) || 0, 999)
+            ];
+            console.log('Updating trends chart with data:', data);
+            trendsChart.data.datasets[0].data = data;
+            trendsChart.update('none'); // Use 'none' for faster, less disruptive updates
+        }
+    }
+    
+    function updatePerformanceMeter(stats) {
+        if (performanceMeter && stats) {
+            const percentage = parseFloat(stats.avg_reliability) || 0;
+            const remaining = Math.max(0, 100 - percentage);
+            console.log('Updating performance meter with percentage:', percentage);
+            
+            performanceMeter.data.datasets[0].data = [percentage, remaining];
+            performanceMeter.data.datasets[0].backgroundColor = [
+                percentage >= 70 ? '#28a745' : percentage >= 40 ? '#ffc107' : '#dc3545',
+                '#f8f9fa'
+            ];
+            performanceMeter.update('none');
+            
+            // Also update the text display
+            const meterValueElement = document.getElementById('meter-value');
+            if (meterValueElement) {
+                const meterNumber = meterValueElement.querySelector('.meter-number');
+                if (meterNumber) {
+                    meterNumber.textContent = percentage.toFixed(1) + '%';
+                    
+                    // Color coding
+                    if (percentage >= 70) {
+                        meterNumber.style.color = '#28a745';
+                    } else if (percentage >= 40) {
+                        meterNumber.style.color = '#ffc107';
+                    } else {
+                        meterNumber.style.color = '#dc3545';
+                    }
+                }
+            }
+        }
+    }
+    
+    // Initialize only the charts we're using
+    function initRiskDistributionChart() {
+        try {
+            const ctx = document.getElementById('riskDistributionChart').getContext('2d');
+            riskDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Reliability', 'Medium Reliability', 'Low Reliability'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                        borderWidth: 0,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: {enabled: true} },
+                    layout: {padding: 10},
+                    cutout: '70%',
+                    animation: {duration: 600, easing: 'easeOutQuart'}
+                }
+            });
+            console.log('Risk distribution chart initialized');
+        } catch (error) {
+            console.error('Error initializing risk distribution chart:', error);
+        }
+    }
+    
+    function initTrendsChart() {
+        try {
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            trendsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Declining', 'Stable', 'Improving'],
+                    datasets: [{
+                        data: [0, 0, 0],
+                        backgroundColor: ['#dc3545', '#6c757d', '#28a745'],
+                        borderRadius: 6,
+                        borderWidth: 0,
+                        maxBarThickness: 42
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    layout: { padding: {top: 10, bottom: 10, left: 10, right: 10} },
+                    plugins: { legend: { display: false }, tooltip: {enabled: true} },
+                    scales: {
+                        x: { beginAtZero: true, grid: { display: false }, ticks: { color: '#6c757d', maxTicksLimit: 6 } },
+                        y: { 
+                            grid: { display: false },
+                            ticks: { 
+                                color: '#6c757d'
+                            }
+                        }
+                    },
+                    animation: {duration: 600, easing: 'easeOutQuart'}
+                }
+            });
+            console.log('Trends chart initialized');
+        } catch (error) {
+            console.error('Error initializing trends chart:', error);
+        }
+    }
+    
+    function initPerformanceMeter() {
+        try {
+            const ctx = document.getElementById('performanceMeter').getContext('2d');
+            performanceMeter = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [0, 100],
+                        backgroundColor: ['#28a745', '#f0f2f6'],
+                        borderWidth: 0,
+                        cutout: '85%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    },
+                    animation: {duration: 600, easing: 'easeOutQuart'}
+                }
+            });
+            console.log('Performance meter initialized');
+        } catch (error) {
+            console.error('Error initializing performance meter:', error);
+        }
+    }
+    
+    // Initialize dashboard with better fallback handling
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Initializing streamlined dashboard...');
+        
+        // Check if Chart.js is loaded
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js is not loaded!');
+            return;
+        }
+        
+        console.log('Chart.js version:', Chart.version);
+        
+        // Initialize server-side data first (immediate display)
+        const serverStats = {
+            total_suppliers: parseInt('{{ stats.total_suppliers or 0 }}'),
+            high_reliability: parseInt('{{ stats.high_reliability or 0 }}'),
+            medium_reliability: parseInt('{{ stats.medium_reliability or 0 }}'),
+            low_reliability: parseInt('{{ stats.low_reliability or 0 }}'),
+            declining_trend: parseInt('{{ stats.declining_trend or 0 }}'),
+            stable_trend: parseInt('{{ stats.stable_trend or 0 }}'),
+            improving_trend: parseInt('{{ stats.improving_trend or 0 }}'),
+            avg_reliability: parseFloat('{{ stats.avg_reliability or 0 }}')
+        };
+        
+        console.log('Server-side data:', serverStats);
+        
+        // Initialize charts with server data
+        try {
+            initRiskDistributionChart();
+            initTrendsChart();
+            initPerformanceMeter();
+            
+            // Update charts with server data immediately
+            setTimeout(() => {
+                updateRealCharts(serverStats);
+                console.log('Charts updated with server data');
+            }, 100);
+            
+            console.log('All charts initialized successfully');
+            
+            // Then try to load fresh data from API (disable conflicting functions)
+            setTimeout(() => {
+                loadRealDashboardData();
+            }, 1000);
+            
+        } catch (error) {
+            console.error('Error during chart initialization:', error);
+        }
+        
+                console.log('Streamlined dashboard initialization complete');
+
+        // Suppliers table + watchlist
+        initSuppliersSection();
+        initSimulator();
+    });
+
+    async function initSuppliersSection() {
+        const tbody = document.querySelector('#suppliersTable tbody');
+        const search = document.getElementById('supplierSearch');
+        const refreshBtn = document.getElementById('refreshSuppliers');
+        const watchlistEl = document.getElementById('watchlist');
+
+        async function fetchSuppliers() {
+            const res = await fetch('/api/suppliers', {credentials: 'include'});
+            if (!res.ok) return [];
+            return await res.json();
+        }
+
+        async function fetchWatchlist() {
+            const res = await fetch('/api/watchlist', {credentials: 'include'});
+            if (!res.ok) return [];
+            return await res.json();
+        }
+
+        async function addToWatchlist(id) {
+            await fetch('/api/watchlist', {method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({supplier_id: id})});
+            renderWatchlist(await fetchWatchlist());
+        }
+
+        async function removeFromWatchlist(id) {
+            await fetch(`/api/watchlist/${encodeURIComponent(id)}`, {method: 'DELETE', credentials: 'include'});
+            renderWatchlist(await fetchWatchlist());
+        }
+
+        function renderWatchlist(list) {
+            watchlistEl.innerHTML = '';
+            list.forEach(id => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.textContent = id;
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm btn-outline-danger';
+                btn.innerHTML = '<i class="fas fa-times"></i>';
+                btn.onclick = () => removeFromWatchlist(id);
+                li.appendChild(btn);
+                watchlistEl.appendChild(li);
+            });
+            if (!list.length) {
+                watchlistEl.innerHTML = '<li class="list-group-item text-muted">No items added</li>';
+            }
+        }
+
+        function pillForTrend(trend) {
+            const map = {improving: 'success', stable: 'secondary', declining: 'danger'};
+            const cls = map[(trend||'').toLowerCase()] || 'secondary';
+            return `<span class="badge bg-${cls}">${trend || 'stable'}</span>`;
+        }
+
+        function renderRows(rows) {
+            tbody.innerHTML = '';
+            rows.forEach(r => {
+                const id = r.supplier_id || r.supplier_name || 'Unknown';
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${r.supplier_name || r.supplier_id || ''}</td>
+                    <td>${r.predicted_score != null ? r.predicted_score + '%' : '-'}</td>
+                    <td>${pillForTrend(r.future_trend)}</td>
+                    <td>${r.reliability || ''}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary"><i class="fas fa-star"></i></button>
+                    </td>
+                `;
+                tr.querySelector('button').onclick = () => addToWatchlist(id);
+                tbody.appendChild(tr);
+            });
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No suppliers yet</td></tr>';
+            }
+        }
+
+        async function load() {
+            const [suppliers, wl] = await Promise.all([fetchSuppliers(), fetchWatchlist()]);
+            renderRows(suppliers);
+            renderWatchlist(wl);
+        }
+
+        search.addEventListener('input', async function() {
+            const suppliers = await fetchSuppliers();
+            const q = this.value.toLowerCase();
+            const filtered = suppliers.filter(s => (s.supplier_name||'').toLowerCase().includes(q) || (s.supplier_id||'').toLowerCase().includes(q));
+            renderRows(filtered);
+        });
+        refreshBtn.addEventListener('click', load);
+        load();
+    }
+
+    function initSimulator() {
+        const onTime = document.getElementById('simOnTime');
+        const defect = document.getElementById('simDefect');
+        const compliance = document.getElementById('simCompliance');
+        const onTimeVal = document.getElementById('simOnTimeVal');
+        const defectVal = document.getElementById('simDefectVal');
+        const complianceVal = document.getElementById('simComplianceVal');
+        const simScore = document.getElementById('simScore');
+        const base = parseFloat('{{ stats.avg_reliability or 0 }}') || 0;
+
+        function calc() {
+            const incOnTime = parseInt(onTime.value || '0', 10);
+            const decDefect = parseInt(defect.value || '0', 10);
+            const incCompliance = parseInt(compliance.value || '0', 10);
+            onTimeVal.textContent = incOnTime + '%';
+            defectVal.textContent = decDefect + '%';
+            complianceVal.textContent = incCompliance + '%';
+            // Simple weighted impact model for demo
+            const projected = Math.min(100, base + incOnTime * 0.3 + incCompliance * 0.25 + decDefect * 0.4);
+            simScore.textContent = projected.toFixed(1) + '%';
+        }
+        [onTime, defect, compliance].forEach(el => el && el.addEventListener('input', calc));
+        calc();
+    }
+</script>
+{% endblock %}

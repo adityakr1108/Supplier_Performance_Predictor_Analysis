@@ -1,0 +1,13 @@
+supplier_id,supplier_name,reliability_score,past_delivery_rate,on_time_percentage,category,region,risk_level
+SUP009,Prime Electronics Corp,0.95,0.98,98,Electronics,Asia,Low
+SUP010,Reliable Manufacturing Inc,0.91,0.95,95,Manufacturing,North America,Low
+SUP011,Precision Auto Components,0.89,0.94,94,Automotive,Europe,Low
+SUP012,Professional Tools Ltd,0.92,0.96,96,Tools,Asia,Low
+SUP013,Advanced Electronics Group,0.97,0.99,99,Electronics,Europe,Low
+SUP014,Quality Manufacturing Co,0.90,0.94,94,Manufacturing,Asia,Low
+SUP015,Deluxe Auto Solutions,0.88,0.93,93,Automotive,North America,Low
+SUP016,Expert Tool Corporation,0.87,0.92,92,Tools,Europe,Low
+SUP017,Innovation Electronics Inc,0.95,0.97,97,Electronics,North America,Low
+SUP018,Excellence Manufacturing Group,0.93,0.96,96,Manufacturing,Europe,Low
+SUP019,Premier Auto Components,0.91,0.95,95,Automotive,Asia,Low
+SUP020,Expert Tool Solutions,0.89,0.94,94,Tools,North America,Low

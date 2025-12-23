@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-users me-2"></i>
+                Vendor Recommendations
+            </h1>
+            <p class="text-muted">Upload vendor data to get AI-powered recommendations for alternative suppliers</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Vendor Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="recommendForm" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="file" class="form-label">Select CSV File *</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                            <div class="form-text">
+                                Please upload a CSV file with vendor data.
+                                <a href="#" class="text-primary">Download sample template</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Required Columns:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>supplier_id</li>
+                                        <li>supplier_name</li>
+                                        <li>category</li>
+                                        <li>region</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>average_lead_time</li>
+                                        <li>reliability_score</li>
+                                        <li>cost_competitiveness</li>
+                                        <li>quality_rating</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-search me-2"></i>
+                                Get Recommendations
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Analyzing...</span>
+                </div>
+                <p class="mt-2">Finding optimal vendor matches...</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommendation Criteria</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Category compatibility
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Geographic proximity
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Lead time optimization
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Quality and reliability scores
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Cost competitiveness
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mt-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-thumbs-up me-2"></i>Vendor Recommendations</h5>
+                    <div>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="exportResults()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="clearResults()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="resultsContent">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let recommendations = [];
+
+document.getElementById('recommendForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('file');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    formData.append('file', fileInput.files[0]);
+    
+    // Show loading spinner
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/recommend_alternate_vendors', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Recommendation failed');
+        }
+        
+        const result = await response.json();
+        recommendations = result.recommendations;
+        displayResults(recommendations);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to process file. Please check the format and try again.');
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+});
+
+function displayResults(results) {
+    if (!results || results.length === 0) {
+        document.getElementById('resultsContent').innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h5>No Recommendations Found</h5>
+                <p>Unable to find suitable alternative vendors based on the provided criteria.</p>
+            </div>
+        `;
+        document.getElementById('resultsSection').style.display = 'block';
+        return;
+    }
+
+    const totalRecommendations = results.length;
+    const uniqueCategories = [...new Set(results.map(r => r.category))].length;
+    const avgScore = (results.reduce((sum, r) => sum + (r.recommendation_score || 0), 0) / results.length).toFixed(1);
+
+    const summaryHtml = `
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-success text-white rounded">
+                    <h4>${totalRecommendations}</h4>
+                    <small>Total Recommendations</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-info text-white rounded">
+                    <h4>${uniqueCategories}</h4>
+                    <small>Categories Covered</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-primary text-white rounded">
+                    <h4>${avgScore}%</h4>
+                    <small>Avg Match Score</small>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const tableRows = results.map(rec => {
+        const score = ((rec.recommendation_score || 0) * 100).toFixed(1);
+        const leadTime = rec.average_lead_time || 'N/A';
+        
+        let scoreColor = 'success';
+        if (rec.recommendation_score < 0.7) scoreColor = 'warning';
+        if (rec.recommendation_score < 0.5) scoreColor = 'danger';
+
+        return `
+            <tr>
+                <td>${rec.supplier_id || 'N/A'}</td>
+                <td>${rec.supplier_name || 'N/A'}</td>
+                <td>${rec.category || 'N/A'}</td>
+                <td>${rec.region || 'N/A'}</td>
+                <td>${leadTime} days</td>
+                <td><span class="badge bg-${scoreColor}">${score}%</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewRecommendationDetails('${rec.supplier_id || 'N/A'}')">
+                        <i class="fas fa-eye"></i> Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const tableHtml = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Supplier ID</th>
+                        <th>Supplier Name</th>
+                        <th>Category</th>
+                        <th>Region</th>
+                        <th>Lead Time</th>
+                        <th>Match Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('resultsContent').innerHTML = summaryHtml + tableHtml;
+    document.getElementById('resultsSection').style.display = 'block';
+}
+
+function viewRecommendationDetails(supplierId) {
+    const rec = recommendations.find(r => r.supplier_id === supplierId);
+    if (!rec) return;
+
+    const modalHtml = `
+        <div class="modal fade" id="recDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Recommendation Details: ${rec.supplier_name || rec.supplier_id}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Supplier Information</h6>
+                                <p><strong>Supplier ID:</strong> ${rec.supplier_id}</p>
+                                <p><strong>Name:</strong> ${rec.supplier_name}</p>
+                                <p><strong>Category:</strong> ${rec.category}</p>
+                                <p><strong>Region:</strong> ${rec.region}</p>
+                                <p><strong>Lead Time:</strong> ${rec.average_lead_time} days</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Performance Metrics</h6>
+                                <p><strong>Match Score:</strong> ${((rec.recommendation_score || 0) * 100).toFixed(1)}%</p>
+                                <p><strong>Reliability:</strong> ${((rec.reliability_score || 0) * 100).toFixed(1)}%</p>
+                                <p><strong>Quality Rating:</strong> ${rec.quality_rating || 'N/A'}/10</p>
+                                <p><strong>Cost Competitiveness:</strong> ${rec.cost_competitiveness || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Recommendation Reasoning</h6>
+                                <p>${rec.reasoning || 'This vendor was selected based on category compatibility, geographic proximity, and performance metrics.'}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Key Advantages</h6>
+                                <ul>
+                                    ${(rec.advantages || ['Competitive pricing', 'Reliable delivery', 'Quality products']).map(adv => `<li>${adv}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success">Contact Vendor</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('recDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    new bootstrap.Modal(document.getElementById('recDetailsModal')).show();
+}
+
+function exportResults() {
+    if (!recommendations || recommendations.length === 0) {
+        alert('No results to export');
+        return;
+    }
+
+    const csvContent = generateCSV(recommendations);
+    downloadCSV(csvContent, 'vendor_recommendations.csv');
+}
+
+function generateCSV(data) {
+    const headers = ['Supplier ID', 'Supplier Name', 'Category', 'Region', 'Lead Time', 'Match Score', 'Reliability Score', 'Quality Rating'];
+    const csvRows = [headers.join(',')];
+
+    data.forEach(row => {
+        const values = [
+            row.supplier_id || '',
+            row.supplier_name || '',
+            row.category || '',
+            row.region || '',
+            row.average_lead_time || '',
+            ((row.recommendation_score || 0) * 100).toFixed(1),
+            ((row.reliability_score || 0) * 100).toFixed(1),
+            row.quality_rating || ''
+        ];
+        csvRows.push(values.join(','));
+    });
+
+    return csvRows.join('\n');
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+function clearResults() {
+    recommendations = [];
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('recommendForm').reset();
+}
+</script>
+{% endblock %}

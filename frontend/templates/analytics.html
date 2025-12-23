@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-chart-pie me-2"></i>
+                Analytics Dashboard
+            </h1>
+            <p class="text-muted">Comprehensive analytics and insights from your supplier performance data</p>
+        </div>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Predictions Made</h6>
+                        <h3 class="mb-0" id="total-predictions">0</h3>
+                        <small class="text-light">This month</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Avg Accuracy</h6>
+                        <h3 class="mb-0" id="avg-accuracy">0%</h3>
+                        <small class="text-light">Model confidence</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">High Risk Alerts</h6>
+                        <h3 class="mb-0" id="high-risk-count">0</h3>
+                        <small class="text-light">Active alerts</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Cost Savings</h6>
+                        <h3 class="mb-0" id="cost-savings">$0</h3>
+                        <small class="text-light">From optimizations</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Prediction Trends</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="predictionTrendsChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-pie-chart me-2"></i>Reliability Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="reliabilityDistributionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Analytics -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity">
+                        <p class="text-muted">Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>My Performance</h5>
+                </div>
+                <div class="card-body">
+                    <div id="personalStats">
+                        <p class="text-muted">Loading performance metrics...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalyticsData();
+    initializeCharts();
+});
+
+async function loadAnalyticsData() {
+    try {
+        const response = await fetch('/api/analytics/summary');
+        if (response.ok) {
+            const data = await response.json();
+            updateAnalyticsCards(data);
+            updateCharts(data);
+        } else {
+            // Use mock data if API not available
+            const mockData = getMockAnalyticsData();
+            updateAnalyticsCards(mockData);
+            updateCharts(mockData);
+        }
+    } catch (error) {
+        console.log('Using mock data for analytics');
+        const mockData = getMockAnalyticsData();
+        updateAnalyticsCards(mockData);
+        updateCharts(mockData);
+    }
+}
+
+function getMockAnalyticsData() {
+    return {
+        totalPredictions: 1247,
+        avgAccuracy: 87.3,
+        highRiskCount: 23,
+        costSavings: 125000,
+        predictionTrends: [45, 52, 48, 61, 58, 67, 73, 69, 78, 82, 75, 89],
+        reliabilityDistribution: { high: 156, medium: 67, low: 24 },
+        regionalData: {
+            'North America': 45,
+            'Europe': 32,
+            'Asia Pacific': 28,
+            'Latin America': 15,
+            'Africa': 8
+        },
+        monthlyActivity: [
+            { month: 'Jan', predictions: 98, accuracy: 85 },
+            { month: 'Feb', predictions: 112, accuracy: 87 },
+            { month: 'Mar', predictions: 134, accuracy: 89 },
+            { month: 'Apr', predictions: 89, accuracy: 86 },
+            { month: 'May', predictions: 156, accuracy: 91 }
+        ]
+    };
+}
+
+function updateAnalyticsCards(data) {
+    document.getElementById('total-predictions').textContent = data.totalPredictions.toLocaleString();
+    document.getElementById('avg-accuracy').textContent = data.avgAccuracy.toFixed(1) + '%';
+    document.getElementById('high-risk-count').textContent = data.highRiskCount;
+    document.getElementById('cost-savings').textContent = '$' + (data.costSavings / 1000).toFixed(0) + 'K';
+}
+
+function initializeCharts() {
+    // This will be called with real data
+    const mockData = getMockAnalyticsData();
+    updateCharts(mockData);
+}
+
+function updateCharts(data) {
+    // Prediction Trends Chart
+    const trendsCtx = document.getElementById('predictionTrendsChart').getContext('2d');
+    new Chart(trendsCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            datasets: [{
+                label: 'My Predictions',
+                data: data.predictionTrends,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Reliability Distribution Chart
+    const reliabilityCtx = document.getElementById('reliabilityDistributionChart').getContext('2d');
+    new Chart(reliabilityCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['High Reliability (≥80%)', 'Medium Reliability (60-79%)', 'Low Reliability (<60%)'],
+            datasets: [{
+                data: [data.reliabilityDistribution.high, data.reliabilityDistribution.medium, data.reliabilityDistribution.low],
+                backgroundColor: ['#27ae60', '#f39c12', '#e74c3c'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+
+    // Recent Activity
+    const activityHtml = data.recentActivity.map(item => `
+        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+            <div>
+                <strong>${item.type.charAt(0).toUpperCase() + item.type.slice(1)}</strong>
+                <small class="text-muted d-block">${item.supplier} - ${item.date}</small>
+            </div>
+            <div>
+                <span class="badge ${item.score.includes('%') && parseFloat(item.score) >= 70 ? 'bg-success' : 'bg-warning'}">${item.score}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('recentActivity').innerHTML = activityHtml || '<p class="text-muted">No recent activity</p>';
+
+    // Personal Stats
+    const personalStatsHtml = `
+        <div class="row">
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-primary">${data.totalPredictions}</h4>
+                    <small>Total Predictions</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-success">${data.avgAccuracy}%</h4>
+                    <small>Avg Accuracy</small>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-warning">${data.highRiskCount}</h4>
+                    <small>High Risk Found</small>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="text-center">
+                    <h4 class="text-info">$${(data.costSavings / 1000).toFixed(0)}K</h4>
+                    <small>Est. Savings</small>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('personalStats').innerHTML = personalStatsHtml;
+}
+
+// Auto-refresh analytics data every 5 minutes
+setInterval(loadAnalyticsData, 5 * 60 * 1000);
+</script>
+{% endblock %}

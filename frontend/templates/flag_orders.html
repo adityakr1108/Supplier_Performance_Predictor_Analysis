@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-flag me-2"></i>
+                Flag High Risk Orders
+            </h1>
+            <p class="text-muted">Upload order data to identify and flag high-risk orders for proactive risk management</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Order Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="flagOrdersForm" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="file" class="form-label">Select CSV File *</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                            <div class="form-text">
+                                Please upload a CSV file with order data.
+                                <a href="#" class="text-primary">Download sample template</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Required Columns:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>order_id</li>
+                                        <li>supplier_id</li>
+                                        <li>expected_delivery_date</li>
+                                        <li>order_value</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>priority_level</li>
+                                        <li>historical_risk_flags</li>
+                                        <li>delivery_complexity</li>
+                                        <li>supplier_performance</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-flag me-2"></i>
+                                Analyze Risk Factors
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-danger" role="status">
+                    <span class="visually-hidden">Analyzing...</span>
+                </div>
+                <p class="mt-2">Analyzing order risk factors...</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Risk Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Delivery timeline analysis
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Supplier reliability assessment
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Historical risk pattern detection
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Priority-based risk scoring
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mt-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>High Risk Orders</h5>
+                    <div>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="exportResults()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="clearResults()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="resultsContent">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let flaggedOrders = [];
+
+document.getElementById('flagOrdersForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('file');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    formData.append('file', fileInput.files[0]);
+    
+    // Show loading spinner
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/flag_high_risk_orders', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Analysis failed');
+        }
+        
+        const result = await response.json();
+        flaggedOrders = result.flagged_orders;
+        displayResults(flaggedOrders);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to process file. Please check the format and try again.');
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+});
+
+function displayResults(results) {
+    if (!results || results.length === 0) {
+        document.getElementById('resultsContent').innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                <h5>No High Risk Orders Found</h5>
+                <p>All orders appear to be within acceptable risk parameters.</p>
+            </div>
+        `;
+        document.getElementById('resultsSection').style.display = 'block';
+        return;
+    }
+
+    const highRisk = results.filter(r => r.risk_level === 'High').length;
+    const mediumRisk = results.filter(r => r.risk_level === 'Medium').length;
+    const total = results.length;
+
+    const summaryHtml = `
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-danger text-white rounded">
+                    <h4>${highRisk}</h4>
+                    <small>High Risk Orders</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-warning text-white rounded">
+                    <h4>${mediumRisk}</h4>
+                    <small>Medium Risk Orders</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center p-3 bg-info text-white rounded">
+                    <h4>${total}</h4>
+                    <small>Total Flagged Orders</small>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const tableRows = results.map(order => {
+        const riskLevel = order.risk_level || 'Unknown';
+        let badgeColor = 'secondary';
+        if (riskLevel === 'High') badgeColor = 'danger';
+        else if (riskLevel === 'Medium') badgeColor = 'warning';
+        
+        const riskScore = ((order.risk_score || 0) * 100).toFixed(1);
+
+        return `
+            <tr>
+                <td>${order.order_id || 'N/A'}</td>
+                <td>${order.supplier_id || 'N/A'}</td>
+                <td>${order.expected_delivery_date || 'N/A'}</td>
+                <td><span class="badge bg-${badgeColor}">${riskLevel}</span></td>
+                <td>${riskScore}%</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewOrderDetails('${order.order_id || 'N/A'}')">
+                        <i class="fas fa-eye"></i> Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const tableHtml = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Supplier ID</th>
+                        <th>Expected Delivery</th>
+                        <th>Risk Level</th>
+                        <th>Risk Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('resultsContent').innerHTML = summaryHtml + tableHtml;
+    document.getElementById('resultsSection').style.display = 'block';
+}
+
+function viewOrderDetails(orderId) {
+    const order = flaggedOrders.find(o => o.order_id === orderId);
+    if (!order) return;
+
+    const modalHtml = `
+        <div class="modal fade" id="orderDetailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Order Risk Details: ${order.order_id}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Order Information</h6>
+                                <p><strong>Order ID:</strong> ${order.order_id}</p>
+                                <p><strong>Supplier:</strong> ${order.supplier_id}</p>
+                                <p><strong>Expected Delivery:</strong> ${order.expected_delivery_date}</p>
+                                <p><strong>Risk Level:</strong> ${order.risk_level}</p>
+                                <p><strong>Risk Score:</strong> ${((order.risk_score || 0) * 100).toFixed(1)}%</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Risk Analysis</h6>
+                                <p>${order.analysis || 'Detailed risk analysis not available'}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <h6>Risk Factors</h6>
+                                <ul>
+                                    ${(order.risk_factors || ['No specific risk factors identified']).map(factor => `<li>${factor}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('orderDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+}
+
+function exportResults() {
+    if (!flaggedOrders || flaggedOrders.length === 0) {
+        alert('No results to export');
+        return;
+    }
+
+    const csvContent = generateCSV(flaggedOrders);
+    downloadCSV(csvContent, 'flagged_orders.csv');
+}
+
+function generateCSV(data) {
+    const headers = ['Order ID', 'Supplier ID', 'Expected Delivery', 'Risk Level', 'Risk Score', 'Analysis'];
+    const csvRows = [headers.join(',')];
+
+    data.forEach(row => {
+        const values = [
+            row.order_id || '',
+            row.supplier_id || '',
+            row.expected_delivery_date || '',
+            row.risk_level || '',
+            ((row.risk_score || 0) * 100).toFixed(1),
+            `"${(row.analysis || '').replace(/"/g, '""')}"`
+        ];
+        csvRows.push(values.join(','));
+    });
+
+    return csvRows.join('\n');
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+function clearResults() {
+    flaggedOrders = [];
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('flagOrdersForm').reset();
+}
+</script>
+{% endblock %}

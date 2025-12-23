@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-calculator me-2"></i>
+                Single Supplier Prediction
+            </h1>
+            <p class="text-muted">Enter supplier details for instant reliability prediction using AI analysis</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-building me-2"></i>Supplier Information</h5>
+                </div>
+                <div class="card-body">
+                    <form id="singlePredictForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="supplier_id" class="form-label">Supplier ID *</label>
+                                <input type="text" class="form-control" id="supplier_id" name="supplier_id" required
+                                    placeholder="e.g., SUP-001">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="supplier_name" class="form-label">Supplier Name *</label>
+                                <input type="text" class="form-control" id="supplier_name" name="supplier_name" required
+                                    placeholder="e.g., TechCorp Industries">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="on_time_percentage" class="form-label">On-Time Delivery % *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="on_time_percentage" name="on_time_percentage" 
+                                        min="0" max="100" step="0.1" required placeholder="85.5">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="quality_score" class="form-label">Quality Score (1-10) *</label>
+                                <input type="number" class="form-control" id="quality_score" name="quality_score" 
+                                    min="1" max="10" step="0.1" required placeholder="8.5">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="reliability_score" class="form-label">Historical Reliability Score (0-1) *</label>
+                                <input type="number" class="form-control" id="reliability_score" name="reliability_score" 
+                                    min="0" max="1" step="0.01" required placeholder="0.85">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="defect_rate" class="form-label">Defect Rate % *</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="defect_rate" name="defect_rate" 
+                                        min="0" max="100" step="0.1" required placeholder="2.5">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="total_orders" class="form-label">Total Orders</label>
+                                <input type="number" class="form-control" id="total_orders" name="total_orders" 
+                                    min="1" placeholder="150">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="years_active" class="form-label">Years Active</label>
+                                <input type="number" class="form-control" id="years_active" name="years_active" 
+                                    min="0" step="0.5" placeholder="5.5">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="contract_compliance" class="form-label">Contract Compliance %</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="contract_compliance" name="contract_compliance" 
+                                        min="0" max="100" step="0.1" placeholder="95.0">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="region" class="form-label">Geographic Region</label>
+                                <select class="form-select" id="region" name="region">
+                                    <option value="">Select Region</option>
+                                    <option value="North America">North America</option>
+                                    <option value="Europe">Europe</option>
+                                    <option value="Asia Pacific">Asia Pacific</option>
+                                    <option value="Latin America">Latin America</option>
+                                    <option value="Middle East & Africa">Middle East & Africa</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="category" class="form-label">Supplier Category</label>
+                                <select class="form-select" id="category" name="category">
+                                    <option value="">Select Category</option>
+                                    <option value="Electronics">Electronics</option>
+                                    <option value="Manufacturing">Manufacturing</option>
+                                    <option value="Raw Materials">Raw Materials</option>
+                                    <option value="Logistics">Logistics</option>
+                                    <option value="Services">Services</option>
+                                    <option value="Software">Software</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Predict Reliability
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card" id="predictionResult" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Prediction Result</h5>
+                </div>
+                <div class="card-body" id="resultContent">
+                    <!-- Result will be populated here -->
+                </div>
+            </div>
+
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Analyzing...</span>
+                </div>
+                <p class="mt-2">Analyzing supplier data...</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>How It Works</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                <small>1</small>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <strong>Data Input</strong>
+                            <p class="mb-0 small text-muted">Enter key supplier performance metrics</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                <small>2</small>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <strong>AI Analysis</strong>
+                            <p class="mb-0 small text-muted">Advanced AI algorithms analyze the data patterns</p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                <small>3</small>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <strong>Prediction</strong>
+                            <p class="mb-0 small text-muted">Get reliability prediction with actionable insights</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('singlePredictForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Show loading spinner
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('predictionResult').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/predict-single', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            throw new Error('Prediction failed');
+        }
+        
+        const result = await response.json();
+        displayResult(result);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        displayError('Failed to predict reliability. Please try again.');
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+});
+
+function displayResult(result) {
+    const reliability = result.reliability;
+    const confidence = (result.confidence * 100).toFixed(1);
+    const predictedScore = (result.predicted_score * 100).toFixed(1);
+    
+    let badgeColor = 'success';
+    let iconClass = 'fa-check-circle';
+    
+    if (reliability === 'Medium') {
+        badgeColor = 'warning';
+        iconClass = 'fa-exclamation-triangle';
+    } else if (reliability === 'Low') {
+        badgeColor = 'danger';
+        iconClass = 'fa-times-circle';
+    }
+    
+    const riskFactorsList = result.risk_factors.map(factor => `<li class="small">${factor}</li>`).join('');
+    const improvementsList = result.improvements.map(improvement => `<li class="small">${improvement}</li>`).join('');
+    
+    const resultHtml = `
+        <div class="text-center mb-3">
+            <div class="display-6 mb-2">
+                <i class="fas ${iconClass} text-${badgeColor}"></i>
+            </div>
+            <h5>Reliability: <span class="badge bg-${badgeColor}">${reliability}</span></h5>
+            <p class="mb-1">Confidence: <strong>${confidence}%</strong></p>
+            <p class="mb-0">Predicted Score: <strong>${predictedScore}%</strong></p>
+        </div>
+        
+        <hr>
+        
+        <div class="mb-3">
+            <h6><i class="fas fa-lightbulb me-1 text-warning"></i>Analysis</h6>
+            <p class="small">${result.reasoning}</p>
+        </div>
+        
+        <div class="mb-3">
+            <h6><i class="fas fa-exclamation-triangle me-1 text-danger"></i>Risk Factors</h6>
+            <ul class="mb-0">${riskFactorsList}</ul>
+        </div>
+        
+        <div class="mb-3">
+            <h6><i class="fas fa-arrow-up me-1 text-success"></i>Improvements</h6>
+            <ul class="mb-0">${improvementsList}</ul>
+        </div>
+        
+        <div>
+            <h6><i class="fas fa-chart-line me-1 text-info"></i>Future Trend</h6>
+            <span class="badge bg-info">${result.future_trend.charAt(0).toUpperCase() + result.future_trend.slice(1)}</span>
+        </div>
+    `;
+    
+    document.getElementById('resultContent').innerHTML = resultHtml;
+    document.getElementById('predictionResult').style.display = 'block';
+}
+
+function displayError(message) {
+    const errorHtml = `
+        <div class="alert alert-danger" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+    `;
+    
+    document.getElementById('resultContent').innerHTML = errorHtml;
+    document.getElementById('predictionResult').style.display = 'block';
+}
+</script>
+{% endblock %}

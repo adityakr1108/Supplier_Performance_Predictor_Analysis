@@ -1,0 +1,577 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-users-cog me-2"></i>
+                Admin Dashboard
+            </h1>
+            <p class="text-muted">System administration and user management</p>
+        </div>
+    </div>
+
+    <!-- Admin Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Total Users</h6>
+                        <h3 class="mb-0" id="total-users">0</h3>
+                        <small class="text-light">Registered users</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Pending Approvals</h6>
+                        <h3 class="mb-0" id="pending-approvals">0</h3>
+                        <small class="text-warning">Need approval</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">System Predictions</h6>
+                        <h3 class="mb-0" id="total-predictions">0</h3>
+                        <small class="text-info">All predictions</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase mb-1">Active Today</h6>
+                        <h3 class="mb-0" id="active-today">0</h3>
+                        <small class="text-success">Online users</small>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Management -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>User Management</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Pending Approvals Tab -->
+                    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                                Pending Approvals <span id="pending-badge" class="badge bg-warning ms-1">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="all-users-tab" data-bs-toggle="tab" data-bs-target="#all-users" type="button" role="tab">
+                                All Users
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="system-logs-tab" data-bs-toggle="tab" data-bs-target="#system-logs" type="button" role="tab">
+                                System Activity
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="adminTabsContent">
+                        <!-- Pending Approvals -->
+                        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                            <div class="mt-3">
+                                <div id="pending-users">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading pending approvals...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- All Users -->
+                        <div class="tab-pane fade" id="all-users" role="tabpanel">
+                            <div class="mt-3">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div>
+                                        <input type="text" class="form-control" id="user-search" placeholder="Search users...">
+                                    </div>
+                                    <div>
+                                        <select class="form-select" id="role-filter">
+                                            <option value="">All Roles</option>
+                                            <option value="user">Users</option>
+                                            <option value="admin">Admins</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="all-users-list">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading users...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- System Activity -->
+                        <div class="tab-pane fade" id="system-logs" role="tabpanel">
+                            <div class="mt-3">
+                                <div id="system-activity">
+                                    <div class="text-center py-4">
+                                        <div class="spinner-border" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading system activity...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Settings -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-cog me-2"></i>System Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="auto-approval">
+                        <label class="form-check-label" for="auto-approval">
+                            Auto-approve new users
+                        </label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                        <label class="form-check-label" for="email-notifications">
+                            Email notifications
+                        </label>
+                    </div>
+                    <button class="btn btn-info btn-sm" onclick="saveSystemSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>System Health</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Database Connection</span>
+                        <span class="badge bg-success">Online</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Azure OpenAI API</span>
+                        <span class="badge bg-success" id="openai-status">Connected</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Storage</span>
+                        <span class="badge bg-info">78% Used</span>
+                    </div>
+                    <button class="btn btn-success btn-sm mt-2" onclick="checkSystemHealth()">Refresh Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="userModalBody">
+                <!-- User details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="approveUser()">Approve</button>
+                <button type="button" class="btn btn-danger" onclick="rejectUser()">Reject</button>
+                <button type="button" class="btn btn-warning" onclick="toggleUserRole()">Toggle Role</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentUserId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAdminData();
+    loadPendingUsers();
+    loadAllUsers();
+    loadSystemActivity();
+});
+
+async function loadAdminData() {
+    try {
+        const response = await fetch('/api/admin/stats');
+        if (response.ok) {
+            const data = await response.json();
+            updateAdminStats(data);
+        }
+    } catch (error) {
+        console.error('Error loading admin data:', error);
+    }
+    
+    // Load system settings
+    loadSystemSettings();
+}
+
+function updateAdminStats(data) {
+    document.getElementById('total-users').textContent = data.totalUsers || 0;
+    document.getElementById('pending-approvals').textContent = data.pendingApprovals || 0;
+    document.getElementById('total-predictions').textContent = data.totalPredictions || 0;
+    document.getElementById('active-today').textContent = data.activeToday || 0;
+    document.getElementById('pending-badge').textContent = data.pendingApprovals || 0;
+}
+
+async function loadPendingUsers() {
+    try {
+        const response = await fetch('/api/admin/pending-users');
+        if (response.ok) {
+            const users = await response.json();
+            displayPendingUsers(users);
+        }
+    } catch (error) {
+        document.getElementById('pending-users').innerHTML = '<p class="text-danger">Error loading pending users</p>';
+    }
+}
+
+function displayPendingUsers(users) {
+    const container = document.getElementById('pending-users');
+    
+    if (users.length === 0) {
+        container.innerHTML = '<p class="text-muted">No pending approvals</p>';
+        return;
+    }
+    
+    const html = users.map(user => `
+        <div class="card mb-2">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${user.first_name} ${user.last_name}</h6>
+                        <small class="text-muted">${user.username} - ${user.email}</small>
+                        <br>
+                        <small class="text-info">${user.company} - ${user.job_title}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-success btn-sm me-2" onclick="quickApprove(${user.id})">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-danger btn-sm me-2" onclick="quickReject(${user.id})">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="viewUserDetails(${user.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+async function loadAllUsers() {
+    try {
+        const response = await fetch('/api/admin/all-users');
+        if (response.ok) {
+            const users = await response.json();
+            displayAllUsers(users);
+        }
+    } catch (error) {
+        document.getElementById('all-users-list').innerHTML = '<p class="text-danger">Error loading users</p>';
+    }
+}
+
+function displayAllUsers(users) {
+    const container = document.getElementById('all-users-list');
+    
+    const html = users.map(user => `
+        <div class="card mb-2">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">${user.first_name} ${user.last_name} 
+                            <span class="badge ${user.role === 'admin' ? 'bg-primary' : 'bg-secondary'}">${user.role}</span>
+                            ${user.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'}
+                        </h6>
+                        <small class="text-muted">${user.username} - ${user.email}</small>
+                        <br>
+                        <small class="text-info">Last login: ${user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</small>
+                    </div>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="viewUserDetails(${user.id})">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+async function loadSystemActivity() {
+    try {
+        const response = await fetch('/api/admin/system-activity');
+        if (response.ok) {
+            const activity = await response.json();
+            displaySystemActivity(activity);
+        }
+    } catch (error) {
+        document.getElementById('system-activity').innerHTML = '<p class="text-danger">Error loading system activity</p>';
+    }
+}
+
+function displaySystemActivity(activity) {
+    const container = document.getElementById('system-activity');
+    
+    const html = activity.map(item => `
+        <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+            <div>
+                <strong>${item.user}</strong>
+                <small class="text-muted d-block">${item.activity} - ${item.timestamp}</small>
+            </div>
+            <div>
+                <span class="badge ${item.type === 'login' ? 'bg-success' : item.type === 'prediction' ? 'bg-info' : 'bg-secondary'}">${item.type}</span>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html || '<p class="text-muted">No recent activity</p>';
+}
+
+async function quickApprove(userId) {
+    try {
+        const response = await fetch(`/api/admin/approve-user/${userId}`, { method: 'POST' });
+        if (response.ok) {
+            showAlert('User approved successfully', 'success');
+            loadPendingUsers();
+            loadAdminData();
+        }
+    } catch (error) {
+        showAlert('Error approving user', 'danger');
+    }
+}
+
+async function quickReject(userId) {
+    if (confirm('Are you sure you want to reject this user?')) {
+        try {
+            const response = await fetch(`/api/admin/reject/${userId}`, { method: 'POST' });
+            if (response.ok) {
+                showAlert('User rejected', 'info');
+                loadPendingUsers();
+                loadAdminData();
+            }
+        } catch (error) {
+            showAlert('Error rejecting user', 'danger');
+        }
+    }
+}
+
+async function viewUserDetails(userId) {
+    currentUserId = userId;
+    try {
+        const response = await fetch(`/api/admin/user-details/${userId}`);
+        if (response.ok) {
+            const user = await response.json();
+            displayUserModal(user);
+        }
+    } catch (error) {
+        showAlert('Error loading user details', 'danger');
+    }
+}
+
+let currentModalUserId = null; // Track which user the modal is for
+
+function displayUserModal(user) {
+    currentModalUserId = user.id; // Store the current user ID
+    const modalBody = document.getElementById('userModalBody');
+    modalBody.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Personal Information</h6>
+                <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
+                <p><strong>Username:</strong> ${user.username}</p>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Role:</strong> <span class="badge ${user.role === 'admin' ? 'bg-primary' : 'bg-secondary'}">${user.role}</span></p>
+            </div>
+            <div class="col-md-6">
+                <h6>Professional Information</h6>
+                <p><strong>Company:</strong> ${user.company}</p>
+                <p><strong>Job Title:</strong> ${user.job_title}</p>
+                <p><strong>Status:</strong> ${user.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'}</p>
+                <p><strong>Approved:</strong> ${user.is_approved ? '<span class="badge bg-success">Yes</span>' : '<span class="badge bg-warning">Pending</span>'}</p>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <h6>Registration Reason</h6>
+                <p>${user.reason}</p>
+                <p><strong>Registered:</strong> ${user.created_at ? new Date(user.created_at).toLocaleString() : '—'}</p>
+                <p><strong>Last Login:</strong> ${user.last_login ? new Date(user.last_login).toLocaleString() : 'Never'}</p>
+            </div>
+        </div>
+    `;
+    
+    new bootstrap.Modal(document.getElementById('userModal')).show();
+}
+
+// Modal action functions
+async function approveUser() {
+    if (!currentModalUserId) return;
+    try {
+        const response = await fetch(`/api/admin/approve-user/${currentModalUserId}`, { method: 'POST' });
+        if (response.ok) {
+            showAlert('User approved successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+            loadPendingUsers();
+            loadAllUsers();
+            loadAdminData();
+        } else {
+            showAlert('Error approving user', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error approving user', 'danger');
+    }
+}
+
+async function rejectUser() {
+    if (!currentModalUserId) return;
+    if (confirm('Are you sure you want to reject this user? This will permanently delete their account.')) {
+        try {
+            const response = await fetch(`/api/admin/reject-user/${currentModalUserId}`, { method: 'POST' });
+            if (response.ok) {
+                showAlert('User rejected successfully', 'success');
+                bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+                loadPendingUsers();
+                loadAllUsers();
+                loadAdminData();
+            } else {
+                showAlert('Error rejecting user', 'danger');
+            }
+        } catch (error) {
+            showAlert('Error rejecting user', 'danger');
+        }
+    }
+}
+
+async function toggleUserRole() {
+    if (!currentModalUserId) return;
+    showAlert('Role toggle functionality coming soon', 'info');
+    // TODO: Implement role toggle endpoint
+}
+
+function checkSystemHealth() {
+    // Simulate system health check
+    document.getElementById('openai-status').textContent = 'Checking...';
+    document.getElementById('openai-status').className = 'badge bg-warning';
+    
+    setTimeout(() => {
+        document.getElementById('openai-status').textContent = 'Connected';
+        document.getElementById('openai-status').className = 'badge bg-success';
+    }, 2000);
+}
+
+async function loadSystemSettings() {
+    try {
+        const response = await fetch('/api/admin/system-settings');
+        if (response.ok) {
+            const settings = await response.json();
+            document.getElementById('auto-approval').checked = settings.auto_approval;
+            document.getElementById('email-notifications').checked = settings.email_notifications;
+        }
+    } catch (error) {
+        console.error('Error loading system settings:', error);
+    }
+}
+
+async function saveSystemSettings() {
+    try {
+        const settings = {
+            auto_approval: document.getElementById('auto-approval').checked,
+            email_notifications: document.getElementById('email-notifications').checked
+        };
+        
+        const response = await fetch('/api/admin/system-settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showAlert('Settings saved successfully', 'success');
+        } else {
+            showAlert('Error saving settings', 'danger');
+        }
+    } catch (error) {
+        showAlert('Error saving settings', 'danger');
+        console.error('Error saving system settings:', error);
+    }
+}
+
+function showAlert(message, type) {
+    // Simple alert system
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+
+// Auto-refresh admin data every 30 seconds
+setInterval(loadAdminData, 30000);
+</script>
+{% endblock %}

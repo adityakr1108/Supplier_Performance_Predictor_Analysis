@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-content">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">
+                <i class="fas fa-chart-bar me-2"></i>
+                Predict Supplier Reliability - Batch Upload
+            </h1>
+            <p class="text-muted">Upload a CSV file containing multiple suppliers for batch prediction analysis</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-upload me-2"></i>Upload Supplier Data</h5>
+                </div>
+                <div class="card-body">
+                    <form id="batchPredictForm" enctype="multipart/form-data">
+                        <div class="mb-4">
+                            <label for="file" class="form-label">Select CSV File *</label>
+                            <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                            <div class="form-text">
+                                Please upload a CSV file with supplier data. 
+                                <a href="/static/sample_suppliers.csv" class="text-primary">Download sample template</a>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Required Columns:</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>supplier_id</li>
+                                        <li>supplier_name</li>
+                                        <li>on_time_percentage</li>
+                                        <li>quality_score</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <ul class="mb-0 small">
+                                        <li>reliability_score</li>
+                                        <li>defect_rate</li>
+                                        <li>total_orders (optional)</li>
+                                        <li>region (optional)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Analyze Suppliers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Processing...</span>
+                </div>
+                <p class="mt-2">Analyzing supplier data...</p>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Tips</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Ensure your CSV has proper headers
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Use numerical values for percentages (0-100)
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Quality scores should be 1-10 scale
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Maximum file size: 10MB
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mt-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Prediction Results</h5>
+                    <div>
+                        <button class="btn btn-outline-light btn-sm me-2" onclick="exportResults()">
+                            <i class="fas fa-download"></i> Export
+                        </button>
+                        <button class="btn btn-light btn-sm" onclick="clearResults()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="resultsContent">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let predictionResults = [];
+
+document.getElementById('batchPredictForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const fileInput = document.getElementById('file');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a CSV file');
+        return;
+    }
+    
+    formData.append('file', fileInput.files[0]);
+    
+    // Show loading spinner
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultsSection').style.display = 'none';
+    
+    try {
+        const response = await fetch('/api/predict_supplier_reliability', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            throw new Error('Prediction failed');
+        }
+        
+        const result = await response.json();
+        predictionResults = result.predictions;
+        displayResults(predictionResults);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to process file. Please check the format and try again.');
+    } finally {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+});
+
+function displayResults(results) {
+    if (!results || results.length === 0) {
+        document.getElementById('resultsContent').innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>No results to display</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Create summary stats
+    const highReliability = results.filter(r => r.reliability === 'High').length;
+    const mediumReliability = results.filter(r => r.reliability === 'Medium').length;
+    const lowReliability = results.filter(r => r.reliability === 'Low').length;
+    const total = results.length;
+
+    const summaryHtml = `
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-success text-white rounded">
+                    <h4>${highReliability}</h4>
+                    <small>High Reliability</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-warning text-white rounded">
+                    <h4>${mediumReliability}</h4>
+                    <small>Medium Reliability</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-danger text-white rounded">
+                    <h4>${lowReliability}</h4>
+                    <small>Low Reliability</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center p-3 bg-primary text-white rounded">
+                    <h4>${total}</h4>
+                    <small>Total Suppliers</small>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Create table
+    const tableRows = results.map(result => {
+        const reliability = result.reliability;
+        let badgeColor = 'success';
+        if (reliability === 'Medium') badgeColor = 'warning';
+        else if (reliability === 'Low') badgeColor = 'danger';
+
+        const confidence = ((result.confidence || 0) * 100).toFixed(1);
+        const predictedScore = ((result.predicted_score || 0) * 100).toFixed(1);
+
+        return `
+            <tr>
+                <td>${result.supplier_id || 'N/A'}</td>
+                <td>${result.supplier_name || 'N/A'}</td>
+                <td><span class="badge bg-${badgeColor}">${reliability}</span></td>
+                <td>${confidence}%</td>
+                <td>${predictedScore}%</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="viewDetails('${result.supplier_id || 'N/A'}')">
+                        <i class="fas fa-eye"></i> Details
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    const tableHtml = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Supplier ID</th>
+                        <th>Supplier Name</th>
+                        <th>Reliability</th>
+                        <th>Confidence</th>
+                        <th>Predicted Score</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('resultsContent').innerHTML = summaryHtml + tableHtml;
+    document.getElementById('resultsSection').style.display = 'block';
+}
+
+function viewDetails(supplierId) {
+    const result = predictionResults.find(r => r.supplier_id === supplierId);
+    if (!result) return;
+
+    const modalHtml = `
+        <div class="modal fade" id="detailsModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Supplier Details: ${result.supplier_name || result.supplier_id}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Prediction Summary</h6>
+                                <p><strong>Reliability:</strong> ${result.reliability}</p>
+                                <p><strong>Confidence:</strong> ${((result.confidence || 0) * 100).toFixed(1)}%</p>
+                                <p><strong>Predicted Score:</strong> ${((result.predicted_score || 0) * 100).toFixed(1)}%</p>
+                                <p><strong>Future Trend:</strong> ${result.future_trend || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Analysis</h6>
+                                <p>${result.reasoning || 'No detailed reasoning available'}</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Risk Factors</h6>
+                                <ul>
+                                    ${(result.risk_factors || []).map(factor => `<li>${factor}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Recommended Improvements</h6>
+                                <ul>
+                                    ${(result.improvements || []).map(improvement => `<li>${improvement}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Remove existing modal
+    const existingModal = document.getElementById('detailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Add new modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    new bootstrap.Modal(document.getElementById('detailsModal')).show();
+}
+
+function exportResults() {
+    if (!predictionResults || predictionResults.length === 0) {
+        alert('No results to export');
+        return;
+    }
+
+    // Convert to CSV
+    const csvContent = generateCSV(predictionResults);
+    downloadCSV(csvContent, 'supplier_predictions.csv');
+}
+
+function generateCSV(data) {
+    const headers = ['Supplier ID', 'Supplier Name', 'Reliability', 'Confidence', 'Predicted Score', 'Future Trend', 'Reasoning'];
+    const csvRows = [headers.join(',')];
+
+    data.forEach(row => {
+        const values = [
+            row.supplier_id || '',
+            row.supplier_name || '',
+            row.reliability || '',
+            ((row.confidence || 0) * 100).toFixed(1),
+            ((row.predicted_score || 0) * 100).toFixed(1),
+            row.future_trend || '',
+            `"${(row.reasoning || '').replace(/"/g, '""')}"`
+        ];
+        csvRows.push(values.join(','));
+    });
+
+    return csvRows.join('\n');
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
+
+function clearResults() {
+    predictionResults = [];
+    document.getElementById('resultsSection').style.display = 'none';
+    document.getElementById('batchPredictForm').reset();
+}
+</script>
+{% endblock %}
