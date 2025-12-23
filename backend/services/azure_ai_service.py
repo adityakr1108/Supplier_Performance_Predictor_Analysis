@@ -9,7 +9,7 @@ load_dotenv()
 class AzureAIService:
     def __init__(self):
         self.client = None
-        self.deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1")
+        self.deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4.1")  # Fixed: was AZURE_OPENAI_DEPLOYMENT
         self.api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview")
         self.use_real_ai = False
         
