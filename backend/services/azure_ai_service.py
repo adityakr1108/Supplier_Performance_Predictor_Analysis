@@ -16,7 +16,7 @@ class AzureAIService:
         # Try to initialize real Azure OpenAI
         try:
             self.client = AzureOpenAI(
-                api_key=os.getenv("AZURE_OPENAI_KEY"),
+                api_key=os.getenv("AZURE_OPENAI_API_KEY"),  # Fixed: was AZURE_OPENAI_KEY
                 api_version=self.api_version,
                 azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
             )
