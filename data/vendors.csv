@@ -1,0 +1,10 @@
+supplier_id,supplier_name,category,region,average_lead_time,quality_rating,price_competitiveness,communication_score,certifications
+SUP009,Prime Electronics Corp,Electronics,Asia,12,4.8,4.5,4.9,ISO9001;ISO14001
+SUP010,Reliable Manufacturing Inc,Manufacturing,North America,15,4.6,4.3,4.7,ISO9001;IATF16949
+SUP011,Precision Auto Components,Automotive,Europe,18,4.5,4.2,4.6,IATF16949;ISO14001
+SUP012,Professional Tools Ltd,Tools,Asia,14,4.7,4.4,4.8,ISO9001
+SUP013,Advanced Electronics Group,Electronics,Europe,10,4.9,4.6,4.9,ISO9001;ISO14001;RoHS
+SUP014,Quality Manufacturing Co,Manufacturing,Asia,16,4.5,4.1,4.5,ISO9001;IATF16949
+SUP015,Deluxe Auto Solutions,Automotive,North America,20,4.4,4.0,4.4,IATF16949
+SUP016,Expert Tool Corporation,Tools,Europe,17,4.3,3.9,4.3,ISO9001
+SUP017,Innovation Electronics Inc,Electronics,North America,13,4.8,4.5,4.8,ISO9001;ISO14001;RoHS

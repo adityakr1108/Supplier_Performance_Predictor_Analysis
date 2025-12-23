@@ -257,9 +257,12 @@ if suppliers_file or orders_file or vendors_file or use_sample_data:
                             trend_counts = pred_df['future_trend'].value_counts()
                             st.bar_chart(trend_counts)
                             
+                    except FileNotFoundError as e:
+                        st.error(f"❌ **File Error:** {str(e)}")
+                        st.info("🔧 The required data files are missing. Please upload CSV files or ensure sample data is available.")
                     except Exception as e:
-                        st.error(f"❌ **Azure OpenAI Error:** {str(e)}")
-                        st.info("🔧 Please check your Azure OpenAI credentials in the .env file")
+                        st.error(f"❌ **Error:** {str(e)}")
+                        st.info("🔧 Please check your Azure OpenAI credentials in the .env file or verify your data files")
         else:
             st.info("📁 Please upload a suppliers CSV file or load sample data to begin AI analysis.")
     
@@ -373,9 +376,12 @@ if suppliers_file or orders_file or vendors_file or use_sample_data:
                             st.success("✅ **Azure OpenAI Analysis:** No high-risk orders identified!")
                             st.balloons()
                             
+                    except FileNotFoundError as e:
+                        st.error(f"❌ **File Error:** {str(e)}")
+                        st.info("🔧 The required data files are missing. Please upload CSV files or ensure sample data is available.")
                     except Exception as e:
-                        st.error(f"❌ **Azure OpenAI Error:** {str(e)}")
-                        st.info("🔧 Please check your Azure OpenAI credentials and try again")
+                        st.error(f"❌ **Error:** {str(e)}")
+                        st.info("🔧 Please check your Azure OpenAI credentials and data files")
         else:
             st.info("📁 Please upload an orders CSV file or load sample data to begin AI risk analysis.")
     
@@ -495,9 +501,12 @@ if suppliers_file or orders_file or vendors_file or use_sample_data:
                             st.info("🤖 **Azure OpenAI Analysis:** Current vendor portfolio is optimally configured!")
                             st.balloons()
                             
+                    except FileNotFoundError as e:
+                        st.error(f"❌ **File Error:** {str(e)}")
+                        st.info("🔧 The required data files are missing. Please upload CSV files or ensure sample data is available.")
                     except Exception as e:
-                        st.error(f"❌ **Azure OpenAI Error:** {str(e)}")
-                        st.info("🔧 Please check your Azure OpenAI credentials and try again")
+                        st.error(f"❌ **Error:** {str(e)}")
+                        st.info("🔧 Please check your Azure OpenAI credentials and data files")
         else:
             st.info("📁 Please upload a vendors CSV file or load sample data to get AI recommendations.")
 
